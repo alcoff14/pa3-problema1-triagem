@@ -37,7 +37,7 @@ int main(void) {
         printf ("2. Fila\n");
         printf ("3. Chamar proximo paciente\n");
         printf ("4. Relatorio\n");
-        printf ("0. Sair");
+        printf ("0. Sair\n");
         printf ("Escolha: ");
         scanf("%d", &opcao);
 
