@@ -127,6 +127,65 @@ void insertion_sort(Atendido v[], int n) {
         v[j + 1] = atual;
     }
 }
+void intercalar(Atendido v[], int inicio, int meio, int fim) {
+    int i;
+    int j;
+    int k;
+    int tamanho;
+    Atendido *temp;
+
+    tamanho = fim - inicio + 1;
+    temp = malloc(tamanho * sizeof(Atendido));
+    if (temp == NULL) {
+        return;
+    }
+
+    i = inicio;
+    j = meio + 1;
+    k = 0;
+
+    while (i <= meio && j <= fim) {
+        if (v[i].espera >= v[j].espera) {
+            temp[k] = v[i];
+            i++;
+        } else {
+            temp[k] = v[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i <= meio) {
+        temp[k] = v[i];
+        i++;
+        k++;
+    }
+
+    while (j <= fim) {
+        temp[k] = v[j];
+        j++;
+        k++;
+    }
+
+    for (k = 0; k < tamanho; k++) {
+        v[inicio + k] = temp[k];
+    }
+
+    free(temp);
+}
+
+void merge_sort(Atendido v[], int inicio, int fim) {
+    int meio;
+
+    if (inicio >= fim) {
+        return;
+    }
+
+    meio = (inicio + fim) / 2;
+    merge_sort(v, inicio, meio);
+    merge_sort(v, meio + 1, fim);
+    intercalar(v, inicio, meio, fim);
+}
 int main(void) {
     cadastros = malloc(MAX * sizeof(Paciente));
     cap_cadastros = MAX;
@@ -281,7 +340,7 @@ int main(void) {
                         case 4: {
                 int i;
                 Atendido *copia;
-
+                int algoritmo;
                 printf("\n=== RELATORIO DO DIA ===\n");
                 printf("Atendidos: %d\n", total_atendidos);
 
@@ -298,7 +357,15 @@ int main(void) {
                     copia[i] = atendidos[i];
                 }
 
-                insertion_sort(copia, total_atendidos);
+                                printf("1 - insertion sort  2 - merge sort\n");
+                printf("Escolha: ");
+                scanf("%d", &algoritmo);
+
+                if (algoritmo == 2) {
+                    merge_sort(copia, 0, total_atendidos - 1);
+                } else {
+                    insertion_sort(copia, total_atendidos);
+                }
 
                 for (i = 0; i < total_atendidos; i++) {
                     int c = copia[i].indice;
