@@ -28,7 +28,6 @@ int cap_cadastros = 0;
 Espera *fila;
 int total_fila = 0;
 int cap_fila = 0;
-
 Atendido *atendidos;
 int total_atendidos = 0;
 int cap_atendidos = 0;
@@ -113,7 +112,21 @@ int chamar_proximo(void) {
 int tamanho_fila(void) {
     return total_fila;
 }
+void insertion_sort(Atendido v[], int n) {
+    int i;
+    int j;
+    Atendido atual;
 
+    for (i = 1; i < n; i++) {
+        atual = v[i];
+        j = i - 1;
+        while (j >= 0 && v[j].espera < atual.espera) {
+            v[j + 1] = v[j];
+            j--;
+        }
+        v[j + 1] = atual;
+    }
+}
 int main(void) {
     cadastros = malloc(MAX * sizeof(Paciente));
     cap_cadastros = MAX;
@@ -265,20 +278,39 @@ int main(void) {
                 break;
             }
 
-            case 4: {
+                        case 4: {
                 int i;
+                Atendido *copia;
+
                 printf("\n=== RELATORIO DO DIA ===\n");
                 printf("Atendidos: %d\n", total_atendidos);
 
+                if (total_atendidos == 0) {
+                    break;
+                }
+
+                copia = malloc(total_atendidos * sizeof(Atendido));
+                if (copia == NULL) {
+                    printf("Sem memoria.\n");
+                    break;
+                }
                 for (i = 0; i < total_atendidos; i++) {
-                    int c = atendidos[i].indice;
+                    copia[i] = atendidos[i];
+                }
+
+                insertion_sort(copia, total_atendidos);
+
+                for (i = 0; i < total_atendidos; i++) {
+                    int c = copia[i].indice;
                     printf("%s Prioridade %d Nascimento %02d/%02d/%04d CPF %011lld Espera %d\n",
                            cadastros[c].nome,
-                           atendidos[i].prioridade,
+                           copia[i].prioridade,
                            cadastros[c].dia, cadastros[c].mes, cadastros[c].ano,
                            cadastros[c].cpf,
-                           atendidos[i].espera);
+                           copia[i].espera);
                 }
+
+                free(copia);
                 break;
             }
             case 5: {
