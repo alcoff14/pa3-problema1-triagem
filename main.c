@@ -1,4 +1,5 @@
 #include <stdio.h> 
+#include <stdlib.h>
 #define MAX 100
 
 typedef struct {
@@ -19,14 +20,31 @@ typedef struct {
     int espera; 
 } Atendido; 
 
+int buscar_cadastro(Paciente cadastros[], int total_cadastros, long long cpf) {
+    int i;
+    for (i = 0; i < total_cadastros; i++) {
+        if (cadastros[i].cpf == cpf) {
+            return i;
+        }
+    }
+    return -1;
+}
 int main(void) { 
-    Paciente cadastros[MAX];
+       Paciente *cadastros = malloc(MAX * sizeof(Paciente));
     int total_cadastros = 0;
+    int cap_cadastros = MAX;
 
-    Espera fila[MAX];
+    Espera *fila = malloc(MAX * sizeof(Espera));
     int total_fila = 0;
+    int cap_fila = MAX;
 
-    Atendido atendidos[MAX];
+    Atendido *atendidos = malloc(MAX * sizeof(Atendido));
+    int cap_atendidos = MAX;
+
+    if (cadastros == NULL || fila == NULL || atendidos == NULL) {
+        printf("Sem memoria.\n");
+        return 1;
+    }
     int total_atendidos = 0;
     int eventos = 0;
     int opcao = -1;
@@ -61,9 +79,14 @@ int main(void) {
                 }
             }
             if (achei == -1) {
-                if (total_cadastros == MAX) { 
-                    printf("Cadastro cheio.\n");
-                    break; 
+                               if (total_cadastros == cap_cadastros) {
+                    Paciente *novo = realloc(cadastros, cap_cadastros * 2 * sizeof(Paciente));
+                    if (novo == NULL) {
+                        printf("Sem memoria.\n");
+                        break;
+                    }
+                    cadastros = novo;
+                    cap_cadastros = cap_cadastros * 2;
                 }
                 printf("CPF nao cadastrado. Vamos cadastrar.\n");
                 printf("Primeiro nome: ");
@@ -89,10 +112,15 @@ int main(void) {
             if (ja_ta_na_fila) {
                 printf("Esse paciente ja esta na fila.\n");
                 break;
-            }
-            if (total_fila == MAX) {
-                printf("fila cheia\n");
-                break;
+                        }
+            if (total_fila == cap_fila) {
+                Espera *novo = realloc(fila, cap_fila * 2 * sizeof(Espera));
+                if (novo == NULL) {
+                    printf("Sem memoria.\n");
+                    break;
+                }
+                fila = novo;
+                cap_fila = cap_fila * 2;
             }
             int prioridade = 0; 
                             printf("Nivel de prioridade:\n");
@@ -160,7 +188,15 @@ int main(void) {
                     printf("Chamada cancelada.\n");
                     break;
                 }
-
+                                if (total_atendidos == cap_atendidos) {
+                    Atendido *novo = realloc(atendidos, cap_atendidos * 2 * sizeof(Atendido));
+                    if (novo == NULL) {
+                        printf("Sem memoria.\n");
+                        break;
+                    }
+                    atendidos = novo;
+                    cap_atendidos = cap_atendidos * 2;
+                }
                 atendidos[total_atendidos].indice = fila[melhor].indice;
                 atendidos[total_atendidos].prioridade = fila[melhor].prioridade;
                 atendidos[total_atendidos].espera = eventos - fila[melhor].chegada;
@@ -194,17 +230,11 @@ int main(void) {
             case 5: {
                 long long cpf;
                 int achei = -1;
-                int i;
 
                 printf("Informe o CPF: ");
                 scanf("%lld", &cpf);
 
-                for (i = 0; i < total_cadastros; i++) {
-                    if (cadastros[i].cpf == cpf) {
-                        achei = i;
-                        break;
-                    }
-                }
+                  achei = buscar_cadastro(cadastros, total_cadastros, cpf);
 
                 if (achei == -1) {
                     printf("Cadastro nao encontrado.\n");
@@ -273,5 +303,9 @@ int main(void) {
 
         }
     }
+        free(cadastros);
+    free(fila);
+    free(atendidos);
+
     return 0;
 }
