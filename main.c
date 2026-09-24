@@ -37,6 +37,8 @@ int main(void) {
         printf ("2. Fila\n");
         printf ("3. Chamar proximo paciente\n");
         printf ("4. Relatorio\n");
+        printf ("5. Buscar cadastro\n");
+        printf ("6. Desistir da fila\n");
         printf ("0. Sair\n");
         printf ("Escolha: ");
         scanf("%d", &opcao);
@@ -189,7 +191,79 @@ int main(void) {
                 }
                 break;
             }
+            case 5: {
+                long long cpf;
+                int achei = -1;
+                int i;
 
+                printf("Informe o CPF: ");
+                scanf("%lld", &cpf);
+
+                for (i = 0; i < total_cadastros; i++) {
+                    if (cadastros[i].cpf == cpf) {
+                        achei = i;
+                        break;
+                    }
+                }
+
+                if (achei == -1) {
+                    printf("Cadastro nao encontrado.\n");
+                    break;
+                }
+
+                printf("%s Nascimento %02d/%02d/%04d CPF %011lld\n",
+                       cadastros[achei].nome,
+                       cadastros[achei].dia, cadastros[achei].mes, cadastros[achei].ano,
+                       cadastros[achei].cpf);
+                break;
+            }
+
+            case 6: {
+                long long cpf;
+                int achei = -1;
+                int na_fila = -1;
+                int i;
+
+                if (total_fila == 0) {
+                    printf("A fila esta vazia.\n");
+                    break;
+                }
+
+                printf("Informe o CPF de quem desistiu: ");
+                scanf("%lld", &cpf);
+
+                for (i = 0; i < total_cadastros; i++) {
+                    if (cadastros[i].cpf == cpf) {
+                        achei = i;
+                        break;
+                    }
+                }
+
+                if (achei == -1) {
+                    printf("Cadastro nao encontrado.\n");
+                    break;
+                }
+
+                for (i = 0; i < total_fila; i++) {
+                    if (fila[i].indice == achei) {
+                        na_fila = i;
+                        break;
+                    }
+                }
+
+                if (na_fila == -1) {
+                    printf("Esse paciente nao esta na fila.\n");
+                    break;
+                }
+
+                printf("%s saiu da fila.\n", cadastros[achei].nome);
+
+                for (i = na_fila; i < total_fila - 1; i++) {
+                    fila[i] = fila[i + 1];
+                }
+                total_fila--;
+                break;
+            }
             case 0:
                 printf("Encerrando.\n");
                 break;
