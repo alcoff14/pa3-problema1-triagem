@@ -34,11 +34,90 @@ int total_atendidos = 0;
 int cap_atendidos = 0;
 
 int eventos = 0;
-int buscar_cadastro(Paciente cadastros[], int total_cadastros, long long cpf) {
+int *tabela_hash;
+int tam_hash = 0;
+
+int eh_primo(int n) {
     int i;
+    if (n < 2) {
+        return 0;
+    }
+    for (i = 2; i * i <= n; i++) {
+        if (n % i == 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int proximo_primo(int n) {
+    while (eh_primo(n) == 0) {
+        n++;
+    }
+    return n;
+}
+
+void limpar_hash(void) {
+    int i;
+    for (i = 0; i < tam_hash; i++) {
+        tabela_hash[i] = -1;
+    }
+}
+
+void inserir_hash(int indice) {
+    int pos;
+
+    pos = (int)(cadastros[indice].cpf % tam_hash);
+    while (tabela_hash[pos] != -1) {
+        pos++;
+        if (pos == tam_hash) {
+            pos = 0;
+        }
+    }
+    tabela_hash[pos] = indice;
+}
+
+int rehash(int novo_tam) {
+    int *nova;
+    int i;
+
+    novo_tam = proximo_primo(novo_tam);
+    nova = malloc(novo_tam * sizeof(int));
+    if (nova == NULL) {
+        return 0;
+    }
+
+    free(tabela_hash);
+    tabela_hash = nova;
+    tam_hash = novo_tam;
+    limpar_hash();
+
     for (i = 0; i < total_cadastros; i++) {
-        if (cadastros[i].cpf == cpf) {
-            return i;
+        inserir_hash(i);
+    }
+    return 1;
+}
+
+int buscar_cadastro(Paciente cadastros[], int total_cadastros, long long cpf) {
+    int pos;
+    int passos;
+
+    if (total_cadastros == 0) {
+        return -1;
+    }
+
+    pos = (int)(cpf % tam_hash);
+
+    for (passos = 0; passos < tam_hash; passos++) {
+        if (tabela_hash[pos] == -1) {
+            return -1;
+        }
+        if (cadastros[tabela_hash[pos]].cpf == cpf) {
+            return tabela_hash[pos];
+        }
+        pos++;
+        if (pos == tam_hash) {
+            pos = 0;
         }
     }
     return -1;
@@ -216,7 +295,13 @@ int cadastrar(long long cpf, char nome[], int dia, int mes, int ano) {
     cadastros[total_cadastros].mes = mes;
     cadastros[total_cadastros].ano = ano;
     total_cadastros++;
-    return total_cadastros - 1;
+
+    if (total_cadastros * 2 >= tam_hash) {
+        if (rehash(tam_hash * 2) == 0) {
+            return -1;
+        }
+    }
+    inserir_hash(total_cadastros - 1);    return total_cadastros - 1;
 }
 
 int desistir(long long cpf) {
@@ -244,6 +329,20 @@ int main(void) {
     cadastros = malloc(MAX * sizeof(Paciente));
     cap_cadastros = MAX;
 
+    tam_hash = proximo_primo(MAX * 2);
+    tabela_hash = malloc(tam_hash * sizeof(int));
+    if (tabela_hash == NULL) {
+        printf("Sem memoria.\n");
+        return 1;
+    }
+    limpar_hash();
+    tam_hash = proximo_primo(MAX * 2);
+    tabela_hash = malloc(tam_hash * sizeof(int));
+    if (tabela_hash == NULL) {
+        printf("Sem memoria.\n");
+        return 1;
+    }
+    limpar_hash();
     fila = malloc(MAX * sizeof(Espera));
     cap_fila = MAX;
 
@@ -254,104 +353,22 @@ int main(void) {
         printf("Sem memoria.\n");
         return 1;
     }
-    int opcao = -1;
-    
+    long long opcao = -1;
+
     while (opcao != 0) {
-        printf ("\n___TRIAGEM___\n");               
-        printf ("1. Cadastrar paciente\n");           
-        printf ("2. Fila\n");
-        printf ("3. Chamar proximo paciente\n");
-        printf ("4. Relatorio\n");
-        printf ("5. Buscar cadastro\n");
-        printf ("6. Desistir da fila\n");
-        printf ("0. Sair\n");
-        printf ("Escolha: ");
-        scanf("%d", &opcao);
+           printf("\nTRIAGEM\n");
+        printf("1. Chamar proximo paciente\n");
+        printf("2. Fila\n");
+        printf("3. Relatorio\n");
+        printf("0. Sair\n");
+        printf("Ou digite um CPF (11 digitos)\n");
+        printf("Escolha: ");
+        scanf("%lld", &opcao);
 
         eventos++;
 
         switch (opcao) {
-        case 1: {
-            long long cpf;
-            int achei = -1;
-            int i;
-
-            printf ("informe o CPF: ");
-            scanf("%lld", &cpf);
-
-            for (i = 0; i < total_cadastros; i++) {
-                if (cadastros[i].cpf == cpf) {
-                    achei = i ;
-                    break;
-                }
-            }
-            if (achei == -1) {
-                               if (total_cadastros == cap_cadastros) {
-                    Paciente *novo = realloc(cadastros, cap_cadastros * 2 * sizeof(Paciente));
-                    if (novo == NULL) {
-                        printf("Sem memoria.\n");
-                        break;
-                    }
-                    cadastros = novo;
-                    cap_cadastros = cap_cadastros * 2;
-                }
-                printf("CPF nao cadastrado. Vamos cadastrar.\n");
-                printf("Primeiro nome: ");
-                scanf("%49s", cadastros[total_cadastros].nome);
-                printf("Nascimento (dia mes ano): ");
-                scanf("%d", &cadastros[total_cadastros].dia);
-                scanf("%d", &cadastros[total_cadastros].mes);
-                scanf("%d", &cadastros[total_cadastros].ano);
-            cadastros[total_cadastros].cpf = cpf;
-            achei = total_cadastros;
-            total_cadastros++;
-            printf("Cadastro criado.\n");
-            } else { 
-                printf("Cadastro Existente: %s\n", cadastros[achei].nome);
-            }
-            int ja_ta_na_fila = 0; 
-            for (i = 0; i < total_fila; i++)  {
-                if (fila[i].indice == achei) {
-                        ja_ta_na_fila = 1; 
-                        break; 
-                }
-            }
-            if (ja_ta_na_fila) {
-                printf("Esse paciente ja esta na fila.\n");
-                break;
-                        }
-            if (total_fila == cap_fila) {
-                Espera *novo = realloc(fila, cap_fila * 2 * sizeof(Espera));
-                if (novo == NULL) {
-                    printf("Sem memoria.\n");
-                    break;
-                }
-                fila = novo;
-                cap_fila = cap_fila * 2;
-            }
-            int prioridade = 0; 
-                            printf("Nivel de prioridade:\n");
-                printf("1 - Emergencia\n");
-                printf("2 - Muito urgente\n");
-                printf("3 - Urgente\n");
-                printf("4 - Pouco urgente\n");
-                printf("5 - Nao urgente\n");
-                printf("Escolha: ");
-                scanf("%d", &prioridade);
-
-                if (prioridade < 1 || prioridade >5) { 
-                    printf("Prioridade invalida. Paciente nao entrou na fila.\n");
-                    break;
-                }
-                fila[total_fila].indice = achei;
-                fila[total_fila].prioridade = prioridade;
-                fila[total_fila].chegada = eventos; 
-                total_fila++; 
-
-                printf("%s entrou na fila com prioridade %d. \n",
-                    cadastros[achei].nome, prioridade);
-                    break; 
-                }
+      
                           case 2: {
                 int i;
                 int acao;
@@ -396,7 +413,7 @@ int main(void) {
                 }
                 break;
             }
-            case 3: {
+            case 1: {
                 int melhor;
                 char resposta;
 
@@ -420,7 +437,7 @@ int main(void) {
                 break;
             }
 
-                        case 4: {
+                        case 3: {
                 int i;
                 Atendido *copia;
                 int algoritmo;
@@ -461,73 +478,6 @@ int main(void) {
                 }
 
                 free(copia);
-                break;
-            }
-            case 5: {
-                long long cpf;
-                int achei = -1;
-
-                printf("Informe o CPF: ");
-                scanf("%lld", &cpf);
-
-                  achei = buscar_cadastro(cadastros, total_cadastros, cpf);
-
-                if (achei == -1) {
-                    printf("Cadastro nao encontrado.\n");
-                    break;
-                }
-
-                printf("%s Nascimento %02d/%02d/%04d CPF %011lld\n",
-                       cadastros[achei].nome,
-                       cadastros[achei].dia, cadastros[achei].mes, cadastros[achei].ano,
-                       cadastros[achei].cpf);
-                break;
-            }
-
-            case 6: {
-                long long cpf;
-                int achei = -1;
-                int na_fila = -1;
-                int i;
-
-                if (total_fila == 0) {
-                    printf("A fila esta vazia.\n");
-                    break;
-                }
-
-                printf("Informe o CPF de quem desistiu: ");
-                scanf("%lld", &cpf);
-
-                for (i = 0; i < total_cadastros; i++) {
-                    if (cadastros[i].cpf == cpf) {
-                        achei = i;
-                        break;
-                    }
-                }
-
-                if (achei == -1) {
-                    printf("Cadastro nao encontrado.\n");
-                    break;
-                }
-
-                for (i = 0; i < total_fila; i++) {
-                    if (fila[i].indice == achei) {
-                        na_fila = i;
-                        break;
-                    }
-                }
-
-                if (na_fila == -1) {
-                    printf("Esse paciente nao esta na fila.\n");
-                    break;
-                }
-
-                printf("%s saiu da fila.\n", cadastros[achei].nome);
-
-                for (i = na_fila; i < total_fila - 1; i++) {
-                    fila[i] = fila[i + 1];
-                }
-                total_fila--;
                 break;
             }
                         case 8: {
@@ -573,7 +523,8 @@ int main(void) {
                 free(b);
                 break;
             }
-         {
+            case 9: {                
+                
                 int n;
                 int i;
                 int quantos;
@@ -586,7 +537,7 @@ int main(void) {
 
                 srand(12345);
                 total_cadastros = 0;
-                total_fila = 0;
+                limpar_hash();                total_fila = 0;
                 total_atendidos = 0;
 
                 for (i = 0; i < n; i++) {
@@ -598,6 +549,7 @@ int main(void) {
                         }
                         cadastros = novo;
                         cap_cadastros = cap_cadastros * 2;
+                    
                     }
                     cadastros[total_cadastros].cpf = 10000000000LL + ((long long)rand() * 32768LL + rand()) % 89999999999LL;
                     sprintf(cadastros[total_cadastros].nome, "P%d", i);
@@ -605,7 +557,14 @@ int main(void) {
                     cadastros[total_cadastros].mes = 1 + rand() % 12;
                     cadastros[total_cadastros].ano = 1950 + rand() % 60;
                     total_cadastros++;
-                }
+                    if (total_cadastros * 2 >= tam_hash) {
+                        if (rehash(tam_hash * 2) == 0) {
+                            printf("Sem memoria.\n");
+                            break;
+                        }
+                    }
+                    inserir_hash(total_cadastros - 1);
+                                }
                 printf("Cadastros criados: %d\n", total_cadastros);
 
                 quantos = 5000;
@@ -639,10 +598,88 @@ int main(void) {
             case 0:
                 printf("Encerrando.\n");
                 break;
+                            default: {
+                int achei;
+                int prioridade;
+                int quer;
+                char nome[50];
+                int dia;
+                int mes;
+                int ano;
 
-            default:
-                printf("Opcao invalida.\n");
+                if (opcao < 10000000000LL || opcao > 99999999999LL) {
+                    printf("Opcao invalida.\n");
+                    break;
+                }
 
+                achei = buscar_cadastro(cadastros, total_cadastros, opcao);
+
+                if (achei == -1) {
+                    printf("CPF %011lld nao cadastrado.\n", opcao);
+                    printf("1 - cadastrar   0 - voltar\n");
+                    printf("Escolha: ");
+                    scanf("%d", &quer);
+
+                    if (quer != 1) {
+                        break;
+                    }
+
+                    printf("Primeiro nome: ");
+                    scanf("%49s", nome);
+                    printf("Nascimento (dia mes ano): ");
+                    scanf("%d", &dia);
+                    scanf("%d", &mes);
+                    scanf("%d", &ano);
+
+                    achei = cadastrar(opcao, nome, dia, mes, ano);
+                    if (achei == -1) {
+                        printf("Nao foi possivel cadastrar.\n");
+                        break;
+                    }
+                    printf("Cadastro criado.\n");
+                } else {
+                    printf("%s Nascimento %02d/%02d/%04d CPF %011lld\n",
+                           cadastros[achei].nome,
+                           cadastros[achei].dia, cadastros[achei].mes, cadastros[achei].ano,
+                           cadastros[achei].cpf);
+                }
+
+                if (esta_na_fila(achei) != -1) {
+                    printf("esse paciente ja esta na fila.\n");
+                    break;
+                }
+
+                printf("\n1 - adicionar paciente na fila   0 - voltar\n");
+                printf("Escolha: ");
+                scanf("%d", &quer);
+
+                if (quer != 1) {
+                    break;
+                }
+            
+                printf("Nivel de prioridade:\n");
+                printf("1 - Emergencia\n");
+                printf("2 - Muito urgente\n");
+                printf("3 - Urgente\n");
+                printf("4 - Pouco urgente\n");
+                printf("5 - Nao urgente\n");
+                printf("Escolha: ");
+                scanf("%d", &prioridade);
+
+                if (prioridade < 1 || prioridade > 5) {
+                    printf("Prioridade invalida. Paciente nao entrou na fila.\n");
+                    break;
+                }
+
+                if (dar_entrada(achei, prioridade) == 0) {
+                    printf("Sem memoria.\n");
+                    break;
+                }
+
+                printf("%s entrou na fila com prioridade %d.\n",
+                       cadastros[achei].nome, prioridade);
+                break;
+            }
         }
     }
         free(cadastros);
