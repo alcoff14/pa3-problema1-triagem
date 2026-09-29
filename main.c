@@ -1,6 +1,7 @@
 #include <stdio.h> 
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #define MAX 100
 
 typedef struct {
@@ -185,6 +186,59 @@ void merge_sort(Atendido v[], int inicio, int fim) {
     merge_sort(v, inicio, meio);
     merge_sort(v, meio + 1, fim);
     intercalar(v, inicio, meio, fim);
+}
+
+int esta_na_fila(int indice) {
+    int i;
+    for (i = 0; i < total_fila; i++) {
+        if (fila[i].indice == indice)   {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int cadastrar(long long cpf, char nome[], int dia, int mes, int ano) {
+    if (buscar_cadastro(cadastros, total_cadastros, cpf) != -1) {
+        return -1;
+    }
+    if (total_cadastros == cap_cadastros) {
+        Paciente *novo = realloc(cadastros, cap_cadastros * 2 * sizeof(Paciente));
+        if (novo == NULL) {
+            return -1;
+        }
+        cadastros = novo;
+        cap_cadastros = cap_cadastros * 2;
+    }
+    cadastros[total_cadastros].cpf = cpf;
+    strcpy(cadastros[total_cadastros].nome, nome);
+    cadastros[total_cadastros].dia = dia;
+    cadastros[total_cadastros].mes = mes;
+    cadastros[total_cadastros].ano = ano;
+    total_cadastros++;
+    return total_cadastros - 1;
+}
+
+int desistir(long long cpf) {
+    int i;
+    int achei;
+    int na_fila;
+
+    achei = buscar_cadastro(cadastros, total_cadastros, cpf);
+    if (achei == -1) {
+        return -1;
+    }
+
+    na_fila = esta_na_fila(achei);
+    if (na_fila == -1) {
+        return -2;
+    }
+
+    for (i = na_fila; i < total_fila - 1; i++) {
+        fila[i] = fila[i + 1];
+    }
+    total_fila--;
+    return achei;
 }
 int main(void) {
     cadastros = malloc(MAX * sizeof(Paciente));
@@ -490,8 +544,7 @@ int main(void) {
                 free(b);
                 break;
             }
-    
-            case 9: {
+         {
                 int n;
                 int i;
                 int quantos;
