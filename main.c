@@ -447,6 +447,50 @@ int main(void) {
                 total_fila--;
                 break;
             }
+                        case 8: {
+                int m;
+                int i;
+                Atendido *a;
+                Atendido *b;
+                clock_t inicio;
+                double t1;
+                double t2;
+
+                printf("Quantos registros de atendimento? ");
+                scanf("%d", &m);
+
+                srand(54321);
+
+                a = malloc(m * sizeof(Atendido));
+                b = malloc(m * sizeof(Atendido));
+                if (a == NULL || b == NULL) {
+                    printf("Sem memoria.\n");
+                    break;
+                }
+
+                for (i = 0; i < m; i++) {
+                    a[i].indice = 0;
+                    a[i].prioridade = 1 + rand() % 5;
+                    a[i].espera = (int)(((long long)rand() * 32768LL + rand()) % 1000000LL);
+                    b[i] = a[i];
+                }
+
+                inicio = clock();
+                insertion_sort(a, m);
+                t1 = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+                inicio = clock();
+                merge_sort(b, 0, m - 1);
+                t2 = (double)(clock() - inicio) / CLOCKS_PER_SEC;
+
+                printf("M = %d\n", m);
+                printf("Insertion sort: %.4f s\n", t1);
+                printf("Merge sort:     %.4f s\n", t2);
+
+                free(a);
+                free(b);
+                break;
+            }
+    
             case 9: {
                 int n;
                 int i;
