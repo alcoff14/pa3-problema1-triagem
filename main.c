@@ -352,21 +352,50 @@ int main(void) {
                     cadastros[achei].nome, prioridade);
                     break; 
                 }
-                case 2: {
-                    int i;
-                    printf("\nPacientes aguardando: %d\n", total_fila); 
+                          case 2: {
+                int i;
+                int acao;
+                long long cpf;
+                int saiu;
 
-                    for (i = 0; i < total_fila; i++ ) { 
-                        int c = fila [i].indice;
-                    printf("%s Prioridade %d Nascimento %02d/%02d/%04d CPF %011lld Espera %d\n",
-                        cadastros[c].nome,
-                        fila[i].prioridade,
-                        cadastros[c].dia, cadastros[c].mes, cadastros[c].ano,
-                        cadastros[c].cpf,
-                        eventos - fila[i].chegada); 
+                printf("\nPacientes aguardando: %d\n", tamanho_fila());
+
+                for (i = 0; i < total_fila; i++) {
+                    int c = fila[i].indice;
+                    printf("%d) %s Prioridade %d Nascimento %02d/%02d/%04d CPF %011lld Espera %d\n",
+                           i + 1,
+                           cadastros[c].nome,
+                           fila[i].prioridade,
+                           cadastros[c].dia, cadastros[c].mes, cadastros[c].ano,
+                           cadastros[c].cpf,
+                           eventos - fila[i].chegada);
                 }
+
+                if (total_fila == 0) {
                     break;
-             }
+                }
+
+                printf("\n1 - remover alguem da fila   0 - voltar\n");
+                printf("Escolha: ");
+                scanf("%d", &acao);
+
+                if (acao != 1) {
+                    break;
+                }
+
+                printf("CPF de quem desistiu: ");
+                scanf("%lld", &cpf);
+
+                saiu = desistir(cpf);
+                if (saiu == -1) {
+                    printf("Cadastro nao encontrado.\n");
+                } else if (saiu == -2) {
+                    printf("Esse paciente nao esta na fila.\n");
+                } else {
+                    printf("%s saiu da fila.\n", cadastros[saiu].nome);
+                }
+                break;
+            }
             case 3: {
                 int melhor;
                 char resposta;
