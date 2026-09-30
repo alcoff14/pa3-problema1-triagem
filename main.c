@@ -567,7 +567,7 @@ int main(void) {
                                 }
                 printf("Cadastros criados: %d\n", total_cadastros);
 
-                quantos = 5000;
+                quantos = 500000;
                 inicio = clock();
                 for (i = 0; i < quantos; i++) {
                     buscar_cadastro(cadastros, total_cadastros, cadastros[(int)(((long long)rand() * 32768LL + rand()) % total_cadastros)].cpf);
