@@ -649,20 +649,13 @@ int main(void) {
                     break;
                 }
 
-                printf("\n1 - adicionar paciente na fila   0 - voltar\n");
-                printf("Escolha: ");
-                scanf("%d", &quer);
-
-                if (quer != 1) {
-                    break;
-                }
-            
-                printf("Nivel de prioridade:\n");
+                                printf("\nNivel de prioridade:\n");
                 printf("1 - Emergencia\n");
                 printf("2 - Muito urgente\n");
                 printf("3 - Urgente\n");
                 printf("4 - Pouco urgente\n");
                 printf("5 - Nao urgente\n");
+                printf("0 - nao entrar na fila\n");
                 printf("Escolha: ");
                 scanf("%d", &prioridade);
 
