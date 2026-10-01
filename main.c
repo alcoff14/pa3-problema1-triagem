@@ -1,7 +1,5 @@
 #include <stdio.h> 
 #include <stdlib.h>
-#include <time.h>
-#include <string.h>
 #include "cadastro.h"
 #include "fila.h"
 #include "ordenacao.h"
@@ -135,110 +133,6 @@ int main(void) {
                 }
 
                 free(copia);
-                break;
-            }
-                        case 8: {
-                int m;
-                int i;
-                Atendido *a;
-                Atendido *b;
-                clock_t inicio;
-                double t1;
-                double t2;
-
-                printf("Quantos registros de atendimento? ");
-                scanf("%d", &m);
-
-                srand(54321);
-
-                a = malloc(m * sizeof(Atendido));
-                b = malloc(m * sizeof(Atendido));
-                if (a == NULL || b == NULL) {
-                    printf("Sem memoria.\n");
-                    break;
-                }
-
-                for (i = 0; i < m; i++) {
-                    a[i].indice = 0;
-                    a[i].prioridade = 1 + rand() % 5;
-                    a[i].espera = (int)(((long long)rand() * 32768LL + rand()) % 1000000LL);
-                    b[i] = a[i];
-                }
-
-                inicio = clock();
-                insertion_sort(a, m);
-                t1 = (double)(clock() - inicio) / CLOCKS_PER_SEC;
-                inicio = clock();
-                merge_sort(b, 0, m - 1);
-                t2 = (double)(clock() - inicio) / CLOCKS_PER_SEC;
-
-                printf("M = %d\n", m);
-                printf("Insertion sort: %.4f s\n", t1);
-                printf("Merge sort:     %.4f s\n", t2);
-
-                free(a);
-                free(b);
-                break;
-            }
-            case 9: {                
-                
-                int n;
-                int i;
-                int quantos;
-                int rep;
-                clock_t inicio;
-                double tempo;
-
-                printf("Quantos cadastros? ");
-                scanf("%d", &n);
-
-                srand(12345);
-                total_cadastros = 0;
-                limpar_hash();                total_fila = 0;
-                total_atendidos = 0;
-
-                                for (i = 0; i < n; i++) {
-                    long long cpf;
-                    char nome[50];
-                    int dia;
-                    int mes;
-                    int ano;
-
-                    cpf = 10000000000LL + ((long long)rand() * 32768LL + rand()) % 89999999999LL;
-                    sprintf(nome, "P%d", i);
-                    dia = 1 + rand() % 28;
-                    mes = 1 + rand() % 12;
-                    ano = 1950 + rand() % 60;
-                    cadastrar(cpf, nome, dia, mes, ano);
-                }
-                printf("Cadastros criados: %d\n", total_cadastros);
-
-                quantos = 500000;
-                inicio = clock();
-                for (i = 0; i < quantos; i++) {
-                                       buscar_cadastro(cadastros[(int)(((long long)rand() * 32768LL + rand()) % total_cadastros)].cpf);
-                }
-                tempo = (double)(clock() - inicio) / CLOCKS_PER_SEC;
-                printf("R2 buscar_cadastro: %d buscas em %.4f s, media %.8f s\n",
-                       quantos, tempo, tempo / quantos);
-
-                quantos = 0;
-                tempo = 0;
-                for (rep = 0; rep < 2000; rep++) {
-                    for (i = 0; i < 500; i++) {
-                        eventos++;
-                        dar_entrada(i, 1 + rand() % 5);
-                    }
-                    inicio = clock();
-                    for (i = 0; i < 500; i++) {
-                        eventos++;
-                        chamar_proximo();
-                    }
-                    tempo = tempo + (double)(clock() - inicio) / CLOCKS_PER_SEC;
-                    quantos = quantos + 500;
-                }
-                printf("R4 chamar_proximo: %d chamadas (fila de 500) em %.4f s, media %.8f s\n",
-                       quantos, tempo, tempo / quantos);
                 break;
             }
             case 0:
