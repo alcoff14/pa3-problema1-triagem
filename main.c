@@ -122,6 +122,62 @@ int buscar_cadastro(Paciente cadastros[], int total_cadastros, long long cpf) {
     }
     return -1;
 }
+int vem_antes(int a, int b) {
+    if (fila[a].prioridade < fila[b].prioridade) {
+        return 1;
+    }
+    if (fila[a].prioridade == fila[b].prioridade &&
+        fila[a].chegada < fila[b].chegada) {
+        return 1;
+    }
+    return 0;
+}
+
+void trocar(int a, int b) {
+    Espera guardado;
+
+    guardado = fila[a];
+    fila[a] = fila[b];
+    fila[b] = guardado;
+}
+
+void subir(int i) {
+    int pai;
+
+    while (i > 0) {
+        pai = (i - 1) / 2;
+        if (vem_antes(i, pai) == 0) {
+            break;
+        }
+        trocar(i, pai);
+        i = pai;
+    }
+}
+
+void descer(int i) {
+    int esq;
+    int dir;
+    int melhor;
+
+    while (1) {
+        esq = 2 * i + 1;
+        dir = 2 * i + 2;
+        melhor = i;
+
+        if (esq < total_fila && vem_antes(esq, melhor) == 1) {
+            melhor = esq;
+        }
+        if (dir < total_fila && vem_antes(dir, melhor) == 1) {
+            melhor = dir;
+        }
+        if (melhor == i) {
+            break;
+        }
+        trocar(i, melhor);
+        i = melhor;
+    }
+}
+
 int dar_entrada(int indice, int prioridade) {
     if (total_fila == cap_fila) {
         Espera *novo = realloc(fila, cap_fila * 2 * sizeof(Espera));
@@ -135,30 +191,18 @@ int dar_entrada(int indice, int prioridade) {
     fila[total_fila].prioridade = prioridade;
     fila[total_fila].chegada = eventos;
     total_fila++;
+        subir(total_fila - 1);
     return 1;
 }
 
 int proximo_da_fila(void) {
-    int i;
-    int melhor;
-
     if (total_fila == 0) {
         return -1;
     }
-    melhor = 0;
-    for (i = 1; i < total_fila; i++) {
-        if (fila[i].prioridade < fila[melhor].prioridade) {
-            melhor = i;
-        } else if (fila[i].prioridade == fila[melhor].prioridade &&
-                   fila[i].chegada < fila[melhor].chegada) {
-            melhor = i;
-        }
-    }
-    return melhor;
+    return 0;
 }
 
 int chamar_proximo(void) {
-    int i;
     int melhor;
     int indice;
 
@@ -180,12 +224,10 @@ int chamar_proximo(void) {
     atendidos[total_atendidos].indice = indice;
     atendidos[total_atendidos].prioridade = fila[melhor].prioridade;
     atendidos[total_atendidos].espera = eventos - fila[melhor].chegada;
-    total_atendidos++;
-
-    for (i = melhor; i < total_fila - 1; i++) {
-        fila[i] = fila[i + 1];
-    }
-    total_fila--;
+     total_atendidos++;
+     total_fila--;
+    fila[0] = fila[total_fila];
+    descer(0);
     return indice;
 }
 
@@ -305,7 +347,6 @@ int cadastrar(long long cpf, char nome[], int dia, int mes, int ano) {
 }
 
 int desistir(long long cpf) {
-    int i;
     int achei;
     int na_fila;
 
@@ -319,10 +360,12 @@ int desistir(long long cpf) {
         return -2;
     }
 
-    for (i = na_fila; i < total_fila - 1; i++) {
-        fila[i] = fila[i + 1];
+       total_fila--;
+    if (na_fila < total_fila) {
+        fila[na_fila] = fila[total_fila];
+        subir(na_fila);
+        descer(na_fila);
     }
-    total_fila--;
     return achei;
 }
 int main(void) {
@@ -578,7 +621,7 @@ int main(void) {
 
                 quantos = 0;
                 tempo = 0;
-                for (rep = 0; rep < 20; rep++) {
+                for (rep = 0; rep < 2000; rep++) {
                     for (i = 0; i < 500; i++) {
                         eventos++;
                         dar_entrada(i, 1 + rand() % 5);
