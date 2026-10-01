@@ -98,20 +98,11 @@ int rehash(int novo_tam) {
     return 1;
 }
 
-int buscar_cadastro(Paciente cadastros[], int total_cadastros, long long cpf) {
+int buscar_cadastro(long long cpf) {
     int pos;
-    int passos;
-
-    if (total_cadastros == 0) {
-        return -1;
-    }
 
     pos = (int)(cpf % tam_hash);
-
-    for (passos = 0; passos < tam_hash; passos++) {
-        if (tabela_hash[pos] == -1) {
-            return -1;
-        }
+    while (tabela_hash[pos] != -1) {
         if (cadastros[tabela_hash[pos]].cpf == cpf) {
             return tabela_hash[pos];
         }
@@ -194,20 +185,10 @@ int dar_entrada(int indice, int prioridade) {
         subir(total_fila - 1);
     return 1;
 }
-
-int proximo_da_fila(void) {
-    if (total_fila == 0) {
-        return -1;
-    }
-    return 0;
-}
-
 int chamar_proximo(void) {
-    int melhor;
     int indice;
 
-    melhor = proximo_da_fila();
-    if (melhor == -1) {
+    if (total_fila == 0) {
         return -1;
     }
 
@@ -220,12 +201,12 @@ int chamar_proximo(void) {
         cap_atendidos = cap_atendidos * 2;
     }
 
-    indice = fila[melhor].indice;
+    indice = fila[0].indice;
     atendidos[total_atendidos].indice = indice;
-    atendidos[total_atendidos].prioridade = fila[melhor].prioridade;
-    atendidos[total_atendidos].espera = eventos - fila[melhor].chegada;
-     total_atendidos++;
-     total_fila--;
+    atendidos[total_atendidos].prioridade = fila[0].prioridade;
+    atendidos[total_atendidos].espera = eventos - fila[0].chegada;
+    total_atendidos++;
+    total_fila--;
     fila[0] = fila[total_fila];
     descer(0);
     return indice;
@@ -318,10 +299,9 @@ int esta_na_fila(int indice) {
     }
     return -1;
 }
-
 int cadastrar(long long cpf, char nome[], int dia, int mes, int ano) {
-    if (buscar_cadastro(cadastros, total_cadastros, cpf) != -1) {
-        return -1;
+    if (buscar_cadastro(cpf) != -1) {       
+         return -1;
     }
     if (total_cadastros == cap_cadastros) {
         Paciente *novo = realloc(cadastros, cap_cadastros * 2 * sizeof(Paciente));
@@ -349,10 +329,9 @@ int cadastrar(long long cpf, char nome[], int dia, int mes, int ano) {
 int desistir(long long cpf) {
     int achei;
     int na_fila;
-
-    achei = buscar_cadastro(cadastros, total_cadastros, cpf);
+    achei = buscar_cadastro(cpf);
     if (achei == -1) {
-        return -1;
+    return -1;
     }
 
     na_fila = esta_na_fila(achei);
@@ -372,13 +351,6 @@ int main(void) {
     cadastros = malloc(MAX * sizeof(Paciente));
     cap_cadastros = MAX;
 
-    tam_hash = proximo_primo(MAX * 2);
-    tabela_hash = malloc(tam_hash * sizeof(int));
-    if (tabela_hash == NULL) {
-        printf("Sem memoria.\n");
-        return 1;
-    }
-    limpar_hash();
     tam_hash = proximo_primo(MAX * 2);
     tabela_hash = malloc(tam_hash * sizeof(int));
     if (tabela_hash == NULL) {
@@ -456,18 +428,16 @@ int main(void) {
                 }
                 break;
             }
-            case 1: {
-                int melhor;
+                       case 1: {
                 char resposta;
 
-                melhor = proximo_da_fila();
-                if (melhor == -1) {
+                if (total_fila == 0) {
                     printf("A fila esta vazia.\n");
                     break;
                 }
 
                 printf("Proximo: %s (prioridade %d). Confirma? (s/n): ",
-                       cadastros[fila[melhor].indice].nome, fila[melhor].prioridade);
+                       cadastros[fila[0].indice].nome, fila[0].prioridade);
                 scanf(" %c", &resposta);
 
                 if (resposta != 's' && resposta != 'S') {
@@ -475,7 +445,7 @@ int main(void) {
                     break;
                 }
 
-                printf("Chamando %s.\n", cadastros[fila[melhor].indice].nome);
+                printf("Chamando %s.\n", cadastros[fila[0].indice].nome);
                 chamar_proximo();
                 break;
             }
@@ -583,37 +553,26 @@ int main(void) {
                 limpar_hash();                total_fila = 0;
                 total_atendidos = 0;
 
-                for (i = 0; i < n; i++) {
-                    if (total_cadastros == cap_cadastros) {
-                        Paciente *novo = realloc(cadastros, cap_cadastros * 2 * sizeof(Paciente));
-                        if (novo == NULL) {
-                            printf("Sem memoria.\n");
-                            break;
-                        }
-                        cadastros = novo;
-                        cap_cadastros = cap_cadastros * 2;
-                    
-                    }
-                    cadastros[total_cadastros].cpf = 10000000000LL + ((long long)rand() * 32768LL + rand()) % 89999999999LL;
-                    sprintf(cadastros[total_cadastros].nome, "P%d", i);
-                    cadastros[total_cadastros].dia = 1 + rand() % 28;
-                    cadastros[total_cadastros].mes = 1 + rand() % 12;
-                    cadastros[total_cadastros].ano = 1950 + rand() % 60;
-                    total_cadastros++;
-                    if (total_cadastros * 2 >= tam_hash) {
-                        if (rehash(tam_hash * 2) == 0) {
-                            printf("Sem memoria.\n");
-                            break;
-                        }
-                    }
-                    inserir_hash(total_cadastros - 1);
-                                }
+                                for (i = 0; i < n; i++) {
+                    long long cpf;
+                    char nome[50];
+                    int dia;
+                    int mes;
+                    int ano;
+
+                    cpf = 10000000000LL + ((long long)rand() * 32768LL + rand()) % 89999999999LL;
+                    sprintf(nome, "P%d", i);
+                    dia = 1 + rand() % 28;
+                    mes = 1 + rand() % 12;
+                    ano = 1950 + rand() % 60;
+                    cadastrar(cpf, nome, dia, mes, ano);
+                }
                 printf("Cadastros criados: %d\n", total_cadastros);
 
                 quantos = 500000;
                 inicio = clock();
                 for (i = 0; i < quantos; i++) {
-                    buscar_cadastro(cadastros, total_cadastros, cadastros[(int)(((long long)rand() * 32768LL + rand()) % total_cadastros)].cpf);
+                                       buscar_cadastro(cadastros[(int)(((long long)rand() * 32768LL + rand()) % total_cadastros)].cpf);
                 }
                 tempo = (double)(clock() - inicio) / CLOCKS_PER_SEC;
                 printf("R2 buscar_cadastro: %d buscas em %.4f s, media %.8f s\n",
@@ -655,7 +614,7 @@ int main(void) {
                     break;
                 }
 
-                achei = buscar_cadastro(cadastros, total_cadastros, opcao);
+                               achei = buscar_cadastro(opcao);
 
                 if (achei == -1) {
                     printf("CPF %011lld nao cadastrado.\n", opcao);
@@ -670,9 +629,7 @@ int main(void) {
                     printf("Primeiro nome: ");
                     scanf("%49s", nome);
                     printf("Nascimento (dia mes ano): ");
-                    scanf("%d", &dia);
-                    scanf("%d", &mes);
-                    scanf("%d", &ano);
+                                       scanf("%d %d %d", &dia, &mes, &ano); 
 
                     achei = cadastrar(opcao, nome, dia, mes, ano);
                     if (achei == -1) {
@@ -718,9 +675,9 @@ int main(void) {
             }
         }
     }
-        free(cadastros);
+    free(cadastros);
     free(fila);
     free(atendidos);
-
-    return 0;
+    free(tabela_hash);
+        return 0;
 }
