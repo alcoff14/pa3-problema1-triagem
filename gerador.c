@@ -12,9 +12,15 @@ void medir_operacoes(void) {
     int rep;
     clock_t inicio;
     double tempo;
+        FILE *arquivo;
 
     printf("Quantos cadastros? ");
     scanf("%d", &n);
+        arquivo = fopen("cadastros_1000000.csv", "r");
+    if (arquivo == NULL) {
+        printf("Nao foi possivel abrir cadastros_1000000.csv.\n");
+        return;
+    }
 
     srand(12345);
     total_cadastros = 0;
@@ -29,13 +35,12 @@ void medir_operacoes(void) {
         int mes;
         int ano;
 
-        cpf = 10000000000LL + ((long long)rand() * 32768LL + rand()) % 89999999999LL;
-        sprintf(nome, "P%d", i);
-        dia = 1 + rand() % 28;
-        mes = 1 + rand() % 12;
-        ano = 1950 + rand() % 60;
+               if (fscanf(arquivo, "%lld,%49[^,],%d,%d,%d", &cpf, nome, &dia, &mes, &ano) != 5) {
+            break;
+        }
         cadastrar(cpf, nome, dia, mes, ano);
     }
+    fclose(arquivo);
     printf("Cadastros criados: %d\n", total_cadastros);
 
     quantos = 500000;
