@@ -498,10 +498,14 @@ int main(void) {
                 int rep;
                 clock_t inicio;
                 double tempo;
-
+                FILE *arquivo;
                 printf("Quantos cadastros? ");
                 scanf("%d", &n);
-
+                arquivo = fopen("cadastros_1000000.csv", "r");
+                if (arquivo == NULL) {
+                    printf("Nao foi possivel abrir cadastros_1000000.csv.\n");
+                    break;
+                }
                 srand(12345);
                 total_cadastros = 0;
                 total_fila = 0;
@@ -517,13 +521,17 @@ int main(void) {
                         cadastros = novo;
                         cap_cadastros = cap_cadastros * 2;
                     }
-                    cadastros[total_cadastros].cpf = 10000000000LL + ((long long)rand() * 32768LL + rand()) % 89999999999LL;
-                    sprintf(cadastros[total_cadastros].nome, "P%d", i);
-                    cadastros[total_cadastros].dia = 1 + rand() % 28;
-                    cadastros[total_cadastros].mes = 1 + rand() % 12;
-                    cadastros[total_cadastros].ano = 1950 + rand() % 60;
+                     if (fscanf(arquivo, "%lld,%49[^,],%d,%d,%d",
+                               &cadastros[total_cadastros].cpf,
+                               cadastros[total_cadastros].nome,
+                               &cadastros[total_cadastros].dia,
+                               &cadastros[total_cadastros].mes,
+                               &cadastros[total_cadastros].ano) != 5) {
+                        break;
+                               }
                     total_cadastros++;
                 }
+                                fclose(arquivo);
                 printf("Cadastros criados: %d\n", total_cadastros);
 
                 quantos = 5000;
